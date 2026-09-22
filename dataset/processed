@@ -1,0 +1,9 @@
+Raw image
+   ↓
+Resize
+   ↓
+Convert format if required
+   ↓
+Normalize
+   ↓
+Processed image
