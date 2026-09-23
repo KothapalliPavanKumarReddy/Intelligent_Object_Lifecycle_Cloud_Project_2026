@@ -79,24 +79,39 @@ Dataset details are available inside the **dataset/** folder.
 ---
 
 ## 📁 Repository Structure
-
-```text
+Intelligent_Object_Lifecycle_Cloud_Project_2026/
+│
 ├── architecture/
+│   └── architecture.md
+│
+├── cloud_simulation/
+│   ├── S3_STANDARD/
+│   ├── S3_STANDARD_IA/
+│   └── S3_GLACIER/
+│
 ├── dataset/
-├── docs/
-├── images/
-├── presentation/
+│   ├── raw/
+│   ├── sample/
+│   └── processed/
+│
 ├── results/
+│   ├── importance_scores.csv
+│   ├── importance_scores_chart.png
+│   ├── lifecycle_log.csv
+│   └── README.md
+│
 ├── src/
-│   ├── frontend/
-│   ├── backend/
 │   ├── ai_model/
-│   ├── database/
-│   └── aws/
+│   │   ├── preprocessing.py
+│   │   └── importance_scoring.py
+│   │
+│   ├── cloud/
+│   │   └── s3_lifecycle.py
+│   │
+│   └── dashboard/
+│       └── dashboard.py
+│
 └── README.md
-```
-
----
 
 ## 📌 Current Project Status
 
