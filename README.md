@@ -100,9 +100,11 @@ Dataset details are available inside the **dataset/** folder.
 
 ## 📌 Current Project Status
 
+### Completed
+
 ✅ Literature Survey Completed
 
-✅ Research Gap Analysis (In Progress)
+✅ Research Gap Analysis Completed
 
 ✅ AWS Architecture Planning Completed
 
@@ -110,13 +112,55 @@ Dataset details are available inside the **dataset/** folder.
 
 ✅ Repository Structure Completed
 
-⏳ Model Development
+✅ Satellite Image Preprocessing Completed
 
-⏳ Cloud Deployment
+✅ CLIP Vision Foundation Model Integrated
 
-⏳ Testing & Evaluation
+✅ Semantic Importance Scoring Implemented
 
----
+✅ Importance-Based Storage Classification Implemented
+
+✅ Local S3 Lifecycle Simulation Implemented
+
+✅ Lifecycle Decision Logging Implemented
+
+✅ Results Visualization Implemented
+
+### Current Prototype Results
+
+The prototype was tested on 10 processed satellite images.
+
+| Category | Number of Images |
+|----------|------------------:|
+| LOW | 6 |
+| MEDIUM | 4 |
+| HIGH | 0 |
+
+Storage-tier distribution:
+
+| Simulated Storage Tier | Number of Images |
+|------------------------|-----------------:|
+| S3_GLACIER | 6 |
+| S3_STANDARD_IA | 4 |
+| S3_STANDARD | 0 |
+
+The importance scores are stored in:
+
+`results/importance_scores.csv`
+
+Lifecycle decisions are stored in:
+
+`results/lifecycle_log.csv`
+
+The generated importance-score visualization is stored in:
+
+`results/importance_scores_chart.png`
+
+### Cloud Deployment Status
+
+The current implementation uses **local folders to simulate AWS S3 storage tiers** because real AWS credentials and deployment are not currently configured.
+
+The proposed AWS deployment using services such as Amazon S3, AWS Lambda, Amazon SageMaker, Amazon CloudWatch, Amazon SNS, and AWS IAM remains part of the future cloud deployment stage.
 
 ## 📚 Course Information
 
