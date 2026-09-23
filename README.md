@@ -185,6 +185,16 @@ The proposed AWS deployment using services such as Amazon S3, AWS Lambda, Amazon
 
 ---
 
+---
+
+## ⚙️ Setup and Installation
+
+### 1. Clone the repository
+
+```bash
+git clone <your-github-repository-url>
+cd Intelligent_Object_Lifecycle_Cloud_Project_2026
+
 ## 📄 License
 
 This repository is created for academic purposes as part of the Cloud Architecture Design course.
