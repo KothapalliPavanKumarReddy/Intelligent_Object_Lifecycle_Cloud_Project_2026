@@ -141,12 +141,12 @@ Intelligent_Object_Lifecycle_Cloud_Project_2026/
 
 ✅ Results Visualization Implemented
 
-### Current Prototype Results
+### Prototype Results
 
 The prototype was tested on 10 processed satellite images.
 
 | Category | Number of Images |
-|----------|------------------:|
+|----------|-----------------:|
 | LOW | 6 |
 | MEDIUM | 4 |
 | HIGH | 0 |
@@ -159,23 +159,17 @@ Storage-tier distribution:
 | S3_STANDARD_IA | 4 |
 | S3_STANDARD | 0 |
 
-The importance scores are stored in:
+### Generated Results
 
-`results/importance_scores.csv`
-
-Lifecycle decisions are stored in:
-
-`results/lifecycle_log.csv`
-
-The generated importance-score visualization is stored in:
-
-`results/importance_scores_chart.png`
+- `results/importance_scores.csv` — semantic importance scores
+- `results/lifecycle_log.csv` — lifecycle decisions
+- `results/importance_scores_chart.png` — importance-score visualization
 
 ### Cloud Deployment Status
 
-The current implementation uses **local folders to simulate AWS S3 storage tiers** because real AWS credentials and deployment are not currently configured.
+The current implementation uses local folders to simulate AWS S3 storage tiers. Real AWS deployment is planned as a future stage.
 
-The proposed AWS deployment using services such as Amazon S3, AWS Lambda, Amazon SageMaker, Amazon CloudWatch, Amazon SNS, and AWS IAM remains part of the future cloud deployment stage.
+The proposed AWS architecture includes Amazon S3, AWS Lambda, Amazon SageMaker, Amazon CloudWatch, Amazon SNS, and AWS IAM.
 
 ## 📚 Course Information
 
