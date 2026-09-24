@@ -76,28 +76,35 @@ S3_GLACIER   S3_STANDARD_IA     S3_STANDARD
                      |
                      v
               Results Dashboard
-AI Model
+```
+
+---
+
+## 🧠 AI Model
 
 The prototype uses:
 
-OpenAI CLIP — openai/clip-vit-base-patch32
+**OpenAI CLIP — `openai/clip-vit-base-patch32`**
 
 The model compares each satellite image with text prompts representing different levels of semantic importance.
 
 The resulting probabilities are converted into a prototype semantic importance score.
 
-Important limitation
+### Important limitation
 
 The generated importance score is a prototype semantic relevance measure. It has not been scientifically validated as an objective measure of the archival value or future usefulness of a satellite image.
 
-☁️ Storage Lifecycle Strategy
+---
+
+## ☁️ Storage Lifecycle Strategy
 
 The prototype maps importance categories to simulated S3 storage tiers:
+
 | Importance Category | Simulated Storage Tier |
-| ------------------- | ---------------------- |
-| LOW                 | S3_GLACIER             |
-| MEDIUM              | S3_STANDARD_IA         |
-| HIGH                | S3_STANDARD            |
+|---------------------|------------------------|
+| LOW | S3_GLACIER |
+| MEDIUM | S3_STANDARD_IA |
+| HIGH | S3_STANDARD |
 🛠️ Technology Stack
 | Category                | Technology            |
 | ----------------------- | --------------------- |
@@ -219,42 +226,57 @@ Simulated Storage-Tier Distribution
 | **Total**      |           **10** |
 The current 10-image sample produced no HIGH-category images under the prototype scoring thresholds. This result is reported as observed rather than artificially adjusted.
 
-📈 Generated Results
+## 📈 Generated Results
 
 The project generates the following result files:
 
-results/importance_scores.csv — semantic importance scores and storage classifications
-results/lifecycle_log.csv — lifecycle decisions
-results/importance_scores_chart.png — importance score visualization
-results/category_distribution.png — importance category distribution
-results/storage_distribution.png — simulated storage-tier distribution
-☁️ Current Cloud Deployment Status
+- `results/importance_scores.csv` — semantic importance scores and storage classifications
+- `results/lifecycle_log.csv` — lifecycle decisions
+- `results/importance_scores_chart.png` — importance score visualization
+- `results/category_distribution.png` — importance category distribution
+- `results/storage_distribution.png` — simulated storage-tier distribution
 
-The current project is a local prototype.
+---
+
+## ☁️ Current Cloud Deployment Status
+
+The current project is a **local prototype**.
 
 The storage lifecycle is simulated using local folders rather than live AWS S3 resources.
 
-Implemented
-Image preprocessing
-CLIP-based semantic scoring
-Importance classification
-Storage-tier mapping
-Local S3 lifecycle simulation
-Lifecycle decision logging
-Results visualization
-Proposed cloud architecture
-Proposed Future AWS Deployment
+### Implemented
+
+- Image preprocessing
+- CLIP-based semantic scoring
+- Importance classification
+- Storage-tier mapping
+- Local S3 lifecycle simulation
+- Lifecycle decision logging
+- Results visualization
+- Proposed cloud architecture
+
+### Proposed Future AWS Deployment
 
 The proposed production architecture can use:
 
-Amazon S3
-AWS Lambda
-Amazon SageMaker
-Amazon CloudWatch
-Amazon SNS
-AWS IAM
-S3 Lifecycle Policies
+- Amazon S3
+- AWS Lambda
+- Amazon SageMaker
+- Amazon CloudWatch
+- Amazon SNS
+- AWS IAM
+- S3 Lifecycle Policies
 
 The proposed AWS architecture is documented in:
 
-architecture/architecture.md
+`architecture/architecture.md`
+
+---
+
+## ⚙️ Setup and Installation
+
+### 1. Clone the repository
+
+```bash
+git clone <your-github-repository-url>
+cd Intelligent_Object_Lifecycle_Cloud_Project_2026
