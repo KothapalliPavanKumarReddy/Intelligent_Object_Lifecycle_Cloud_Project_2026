@@ -151,7 +151,7 @@ The prototype was tested on 10 processed satellite images.
 | MEDIUM | 4 |
 | HIGH | 0 |
 
-Storage-tier distribution:
+### Storage-Tier Distribution
 
 | Simulated Storage Tier | Number of Images |
 |------------------------|-----------------:|
@@ -167,7 +167,9 @@ Storage-tier distribution:
 
 ### Cloud Deployment Status
 
-The current implementation uses local folders to simulate AWS S3 storage tiers. Real AWS deployment is planned as a future stage.
+The current implementation uses local folders to simulate AWS S3 storage tiers.
+
+Real AWS deployment is planned as a future stage.
 
 The proposed AWS architecture includes Amazon S3, AWS Lambda, Amazon SageMaker, Amazon CloudWatch, Amazon SNS, and AWS IAM.
 
