@@ -20,6 +20,10 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated dependency snapshot
+requirements_freeze.txt
+
 # Local satellite dataset
 dataset/raw/
 dataset/sample/

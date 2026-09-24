@@ -1,0 +1,11 @@
+image_name,importance_score,category,storage_class
+RGB-PanSharpen_AOI_2_Vegas_img1454_processed.jpg,20.77,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img1521_processed.jpg,32.23,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img1539_processed.jpg,36.46,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img230_processed.jpg,41.21,MEDIUM,S3_STANDARD_IA
+RGB-PanSharpen_AOI_2_Vegas_img408_processed.jpg,38.72,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img517_processed.jpg,31.70,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img699_processed.jpg,47.30,MEDIUM,S3_STANDARD_IA
+RGB-PanSharpen_AOI_2_Vegas_img734_processed.jpg,44.96,MEDIUM,S3_STANDARD_IA
+RGB-PanSharpen_AOI_2_Vegas_img767_processed.jpg,32.82,LOW,S3_GLACIER
+RGB-PanSharpen_AOI_2_Vegas_img794_processed.jpg,40.87,MEDIUM,S3_STANDARD_IA

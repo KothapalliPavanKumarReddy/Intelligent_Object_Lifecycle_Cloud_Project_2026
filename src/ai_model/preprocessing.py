@@ -1,24 +1,26 @@
 from pathlib import Path
 from PIL import Image
 
-# Project paths
+# Project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# Dataset folders
 INPUT_DIR = PROJECT_ROOT / "dataset" / "sample"
 OUTPUT_DIR = PROJECT_ROOT / "dataset" / "processed"
 
-# Create output folder if it doesn't exist
+# Create output folder
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Image size required for our initial pipeline
+# Target image size for the vision model
 IMAGE_SIZE = (224, 224)
 
 
 def preprocess_images():
-    image_files = list(INPUT_DIR.glob("*"))
+
+    image_files = list(INPUT_DIR.glob("*.tif"))
 
     if not image_files:
-        print("No images found in dataset/sample/")
+        print("No TIFF images found in dataset/sample/")
         return
 
     processed_count = 0
@@ -26,10 +28,12 @@ def preprocess_images():
     for image_path in image_files:
 
         try:
-            # Open image
+            print(f"Processing: {image_path.name}")
+
+            # Open satellite image
             image = Image.open(image_path).convert("RGB")
 
-            # Resize image
+            # Resize for vision model
             image = image.resize(IMAGE_SIZE)
 
             # Output filename
@@ -41,13 +45,11 @@ def preprocess_images():
 
             processed_count += 1
 
-            print(f"Processed: {image_path.name}")
-
         except Exception as e:
             print(f"Skipped {image_path.name}: {e}")
 
     print()
-    print(f"Processing complete!")
+    print("Processing complete!")
     print(f"Images processed: {processed_count}")
     print(f"Output folder: {OUTPUT_DIR}")
 
