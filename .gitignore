@@ -28,3 +28,6 @@ requirements_freeze.txt
 dataset/raw/
 dataset/sample/
 dataset/processed/
+
+dataset/SN3_roads_sample.tar.gz
+dataset/SpaceNet_Roads_Sample/
