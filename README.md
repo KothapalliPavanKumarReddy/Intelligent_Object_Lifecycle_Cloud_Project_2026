@@ -4,14 +4,16 @@
 
 This project is developed as part of the **BCSE355L – Cloud Architecture Design** course.
 
-The project proposes an intelligent cloud-based lifecycle management system for satellite image archives using Vision Foundation Models. Instead of using traditional time-based lifecycle policies, the system analyzes the semantic importance of satellite images and automatically assigns them to appropriate AWS S3 storage tiers, thereby reducing storage costs while preserving access to high-value imagery.
+The project presents a content-aware cloud storage lifecycle management approach for satellite image archives. Instead of relying only on file age, the prototype uses a Vision Foundation Model (CLIP) to estimate the semantic relevance of satellite images and map the resulting importance categories to different storage tiers.
+
+The current implementation uses a **local S3 storage simulation** to demonstrate the lifecycle decisions without requiring live AWS resources.
 
 ---
 
 ## 👨‍💻 Team Members
 
 | Registration Number | Name |
-|---------------------|---------------------------|
+|---------------------|------|
 | 24BIT0580 | K. Pavan Kumar Reddy |
 | 24BIT0129 | Anhad |
 
@@ -19,66 +21,109 @@ The project proposes an intelligent cloud-based lifecycle management system for 
 
 ## 🎯 Problem Statement
 
-Traditional cloud storage lifecycle policies rely mainly on the age of files for storage tier transitions. This approach is inefficient for satellite image archives because important images may be archived too early while less useful images continue occupying expensive storage.
+Traditional cloud storage lifecycle policies primarily rely on object age or predefined transition rules.
 
-This project introduces an intelligent content-aware lifecycle management framework using Vision Foundation Models to classify image importance and automate storage tier optimization.
+For large satellite image archives, a content-aware approach can provide an additional decision signal by considering the semantic relevance of individual images.
+
+This project explores a prototype framework that analyzes satellite images using a Vision Foundation Model and assigns them to different storage tiers according to their semantic importance.
 
 ---
 
 ## 🎯 Objectives
 
-- Develop a content-aware lifecycle management system for satellite image archives.
-- Integrate Vision Foundation Models for semantic image analysis.
-- Reduce cloud storage cost using AWS S3 storage tiers.
-- Automate lifecycle transitions using AWS services.
-- Improve retrieval efficiency for important satellite images.
+- Develop a content-aware lifecycle management prototype for satellite image archives.
+- Apply a Vision Foundation Model for semantic image analysis.
+- Generate semantic importance scores for satellite images.
+- Classify images into LOW, MEDIUM, and HIGH importance categories.
+- Map importance categories to simulated cloud storage tiers.
+- Record lifecycle decisions for analysis and auditing.
+- Visualize importance scores and storage-tier distributions.
+- Design a proposed AWS architecture for future cloud deployment.
 
 ---
 
-## ☁️ Proposed AWS Architecture
+## 🏗️ System Architecture
 
-The proposed architecture consists of:
+The project consists of the following processing stages:
 
-- Amazon S3
-- AWS Lambda
-- Amazon SageMaker
-- Amazon CloudWatch
-- Amazon SNS
-- AWS IAM
+```text
+Satellite Images
+       |
+       v
+Image Preprocessing
+       |
+       v
+CLIP Vision Foundation Model
+       |
+       v
+Semantic Importance Score
+       |
+       v
+Importance Classification
+       |
+       +-----------------------------+
+       |             |               |
+       v             v               v
+     LOW          MEDIUM            HIGH
+       |             |               |
+       v             v               v
+S3_GLACIER   S3_STANDARD_IA     S3_STANDARD
+       |             |               |
+       +-------------+---------------+
+                     |
+                     v
+            Lifecycle Decision Log
+                     |
+                     v
+              Results Dashboard
+AI Model
 
-The complete architecture diagrams are available inside the **architecture/** folder.
+The prototype uses:
 
----
+OpenAI CLIP — openai/clip-vit-base-patch32
 
-## 🛠 Technology Stack
+The model compares each satellite image with text prompts representing different levels of semantic importance.
 
-| Category | Technologies |
-|----------|--------------|
-| Programming | Python |
-| Cloud Platform | AWS |
-| Storage | Amazon S3 |
-| Compute | AWS Lambda |
-| AI | Vision Foundation Models (CLIP / DINOv2) |
-| Database | DynamoDB (Planned) |
-| Dashboard | Streamlit |
-| Version Control | Git & GitHub |
+The resulting probabilities are converted into a prototype semantic importance score.
 
----
+Important limitation
 
-## 📂 Dataset
+The generated importance score is a prototype semantic relevance measure. It has not been scientifically validated as an objective measure of the archival value or future usefulness of a satellite image.
 
-**Dataset Name:** SpaceNet Dataset
+☁️ Storage Lifecycle Strategy
 
-Purpose:
-- Satellite image classification
-- Lifecycle optimization
-- Cloud storage evaluation
+The prototype maps importance categories to simulated S3 storage tiers:
+| Importance Category | Simulated Storage Tier |
+| ------------------- | ---------------------- |
+| LOW                 | S3_GLACIER             |
+| MEDIUM              | S3_STANDARD_IA         |
+| HIGH                | S3_STANDARD            |
+🛠️ Technology Stack
+| Category                | Technology            |
+| ----------------------- | --------------------- |
+| Programming             | Python 3.11           |
+| AI Model                | OpenAI CLIP           |
+| Image Processing        | Pillow                |
+| Data Processing         | Pandas                |
+| Visualization           | Matplotlib            |
+| Cloud Concept           | Amazon S3             |
+| Cloud Lifecycle Concept | S3 Lifecycle Policies |
+| Proposed Compute        | AWS Lambda            |
+| Proposed ML Deployment  | Amazon SageMaker      |
+| Proposed Monitoring     | Amazon CloudWatch     |
+| Proposed Notifications  | Amazon SNS            |
+| Proposed Access Control | AWS IAM               |
+| Version Control         | Git & GitHub          |
+📂 Dataset
 
-Dataset details are available inside the **dataset/** folder.
+Dataset: SpaceNet satellite imagery sample
 
----
+The prototype uses a small sample of 10 satellite images for experimentation and demonstration.
 
-## 📁 Repository Structure
+The downloaded raw and processed image datasets are intentionally excluded from Git tracking where appropriate because of dataset size.
+
+The project therefore stores the processing code and generated results in the repository while the local dataset remains available in the development environment.
+📁 Repository Structure
 Intelligent_Object_Lifecycle_Cloud_Project_2026/
 │
 ├── architecture/
@@ -90,13 +135,13 @@ Intelligent_Object_Lifecycle_Cloud_Project_2026/
 │   └── S3_GLACIER/
 │
 ├── dataset/
-│   ├── raw/
-│   ├── sample/
-│   └── processed/
+│   └── README.md
 │
 ├── results/
 │   ├── importance_scores.csv
 │   ├── importance_scores_chart.png
+│   ├── category_distribution.png
+│   ├── storage_distribution.png
 │   ├── lifecycle_log.csv
 │   └── README.md
 │
@@ -111,86 +156,105 @@ Intelligent_Object_Lifecycle_Cloud_Project_2026/
 │   └── dashboard/
 │       └── dashboard.py
 │
+├── .gitignore
+├── requirements.txt
 └── README.md
+🔄 Processing Pipeline
+1. Image Preprocessing
 
-## 📌 Current Project Status
+Satellite TIFF images are:
 
-### Completed
+loaded using Pillow
+converted to RGB
+resized to 224 × 224
+saved as JPEG files for model processing
+2. Importance Scoring
 
-✅ Literature Survey Completed
+The processed images are passed through the CLIP model.
 
-✅ Research Gap Analysis Completed
+The model compares the image against importance-related text prompts and produces probabilities.
 
-✅ AWS Architecture Planning Completed
+These probabilities are converted into a prototype semantic importance score.
 
-✅ Dataset Selection Completed
+3. Importance Classification
 
-✅ Repository Structure Completed
+The prototype uses the following classification thresholds:
+| Score | Category |
+| ----: | -------- |
+|  ≥ 70 | HIGH     |
+|  ≥ 40 | MEDIUM   |
+|  < 40 | LOW      |
+4. Storage Mapping
 
-✅ Satellite Image Preprocessing Completed
+The category is mapped to a simulated storage tier.
 
-✅ CLIP Vision Foundation Model Integrated
+5. Lifecycle Simulation
 
-✅ Semantic Importance Scoring Implemented
+The lifecycle module copies the processed image into the corresponding local storage-tier directory and records the decision.
 
-✅ Importance-Based Storage Classification Implemented
+6. Dashboard
 
-✅ Local S3 Lifecycle Simulation Implemented
+The dashboard generates visualizations for:
 
-✅ Lifecycle Decision Logging Implemented
-
-✅ Results Visualization Implemented
-
-### Prototype Results
+individual image importance scores
+importance category distribution
+simulated storage-tier distribution
+📊 Prototype Results
 
 The prototype was tested on 10 processed satellite images.
 
-| Category | Number of Images |
-|----------|-----------------:|
-| LOW | 6 |
-| MEDIUM | 4 |
-| HIGH | 0 |
+Importance Category Distribution
+| Category  | Number of Images |
+| --------- | ---------------: |
+| LOW       |                6 |
+| MEDIUM    |                4 |
+| HIGH      |                0 |
+| **Total** |           **10** |
+Simulated Storage-Tier Distribution
+| Storage Tier   | Number of Images |
+| -------------- | ---------------: |
+| S3_GLACIER     |                6 |
+| S3_STANDARD_IA |                4 |
+| S3_STANDARD    |                0 |
+| **Total**      |           **10** |
+The current 10-image sample produced no HIGH-category images under the prototype scoring thresholds. This result is reported as observed rather than artificially adjusted.
 
-### Storage-Tier Distribution
+📈 Generated Results
 
-| Simulated Storage Tier | Number of Images |
-|------------------------|-----------------:|
-| S3_GLACIER | 6 |
-| S3_STANDARD_IA | 4 |
-| S3_STANDARD | 0 |
+The project generates the following result files:
 
-### Generated Results
+results/importance_scores.csv — semantic importance scores and storage classifications
+results/lifecycle_log.csv — lifecycle decisions
+results/importance_scores_chart.png — importance score visualization
+results/category_distribution.png — importance category distribution
+results/storage_distribution.png — simulated storage-tier distribution
+☁️ Current Cloud Deployment Status
 
-- `results/importance_scores.csv` — semantic importance scores
-- `results/lifecycle_log.csv` — lifecycle decisions
-- `results/importance_scores_chart.png` — importance-score visualization
+The current project is a local prototype.
 
-### Cloud Deployment Status
+The storage lifecycle is simulated using local folders rather than live AWS S3 resources.
 
-The current implementation uses local folders to simulate AWS S3 storage tiers.
+Implemented
+Image preprocessing
+CLIP-based semantic scoring
+Importance classification
+Storage-tier mapping
+Local S3 lifecycle simulation
+Lifecycle decision logging
+Results visualization
+Proposed cloud architecture
+Proposed Future AWS Deployment
 
-Real AWS deployment is planned as a future stage.
+The proposed production architecture can use:
 
-The proposed AWS architecture includes Amazon S3, AWS Lambda, Amazon SageMaker, Amazon CloudWatch, Amazon SNS, and AWS IAM.
+Amazon S3
+AWS Lambda
+Amazon SageMaker
+Amazon CloudWatch
+Amazon SNS
+AWS IAM
+S3 Lifecycle Policies
 
-## 📚 Course Information
+The proposed AWS architecture is documented in:
 
-**Course:** BCSE355L – Cloud Architecture Design
-
-**Project Phase:** Phase-I
-
----
-
----
-
-## ⚙️ Setup and Installation
-
-### 1. Clone the repository
-
-```bash
-git clone <your-github-repository-url>
-cd Intelligent_Object_Lifecycle_Cloud_Project_2026
-
-## 📄 License
-
-This repository is created for academic purposes as part of the Cloud Architecture Design course.
+architecture/architecture.md
