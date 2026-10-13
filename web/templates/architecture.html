@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="arch-container">
+    <!-- Notice / Disclaimer Banner -->
+    <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div style="font-size: 0.85rem; color: #cbd5e1;">
+            <strong>System Architecture Specification:</strong> The application currently operates as a fully functional <strong>Local Simulation Prototype</strong>. The second diagram illustrates the <strong>Proposed Cloud Deployment</strong> on AWS infrastructure, designed for enterprise-scale satellite ingestion.
+        </div>
+    </div>
+
+    <!-- 1. CURRENT LOCAL PROTOTYPE ARCHITECTURE -->
+    <div class="arch-card">
+        <div class="arch-header">
+            <div>
+                <h3 style="color: #fff; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px;">
+                    1. Current Local Prototype Architecture
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.82rem;">
+                    Active local implementation executing Python ML inference & simulated file tiering
+                </p>
+            </div>
+            <span class="arch-badge-local">CURRENTLY IMPLEMENTED & ACTIVE</span>
+        </div>
+
+        <div class="flow-diagram">
+            <!-- Stage 1 -->
+            <div class="flow-step-box primary">
+                <div class="flow-step-title">Satellite Image Archive</div>
+                <div class="flow-step-desc">dataset/sample/*.tif (16-bit GeoTIFF imagery)</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 2 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Image Preprocessing</div>
+                <div class="flow-step-desc">Contrast Stretching (0&ndash;255) & Resize (224&times;224 RGB)</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 3 -->
+            <div class="flow-step-box ai">
+                <div class="flow-step-title">CLIP Vision Foundation Model</div>
+                <div class="flow-step-desc">openai/clip-vit-base-patch32 (Zero-Shot Transformer)</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 4 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Semantic Importance Score</div>
+                <div class="flow-step-desc">Softmax prompt weighting: 100 &bull; 50 &bull; 0</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 5: Classification -->
+            <div class="flow-branches">
+                <div class="flow-branch-box" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1);">
+                    <div style="color: var(--color-high); font-weight: 700;">HIGH</div>
+                    <div style="font-size: 0.72rem; color: #94a3b8;">Score &ge; 70.0</div>
+                    <div class="flow-arrow-down" style="margin: 6px 0;">&darr;</div>
+                    <span class="badge badge-s3-standard">S3_STANDARD</span>
+                </div>
+
+                <div class="flow-branch-box" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1);">
+                    <div style="color: var(--color-medium); font-weight: 700;">MEDIUM</div>
+                    <div style="font-size: 0.72rem; color: #94a3b8;">40.0 &le; Score &lt; 70.0</div>
+                    <div class="flow-arrow-down" style="margin: 6px 0;">&darr;</div>
+                    <span class="badge badge-s3-ia">S3_STANDARD_IA</span>
+                </div>
+
+                <div class="flow-branch-box" style="border-color: rgba(100, 116, 139, 0.4); background: rgba(100, 116, 139, 0.1);">
+                    <div style="color: #94a3b8; font-weight: 700;">LOW</div>
+                    <div style="font-size: 0.72rem; color: #94a3b8;">Score &lt; 40.0</div>
+                    <div class="flow-arrow-down" style="margin: 6px 0;">&darr;</div>
+                    <span class="badge badge-s3-glacier">S3_GLACIER</span>
+                </div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 6 -->
+            <div class="flow-step-box decision">
+                <div class="flow-step-title">Simulated S3 Storage</div>
+                <div class="flow-step-desc">cloud_simulation/{S3_STANDARD, S3_STANDARD_IA, S3_GLACIER}</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 7 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Lifecycle Decision Log</div>
+                <div class="flow-step-desc">results/lifecycle_log.csv & results/importance_scores.csv</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- Stage 8 -->
+            <div class="flow-step-box primary">
+                <div class="flow-step-title">IntelliArchive Dashboard</div>
+                <div class="flow-step-desc">FastAPI + Jinja2 + Chart.js Real-time Local Web App</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PROPOSED AWS ARCHITECTURE -->
+    <div class="arch-card">
+        <div class="arch-header">
+            <div>
+                <h3 style="color: #fff; font-size: 1.2rem; font-weight: 700; margin-bottom: 4px;">
+                    2. Proposed AWS Cloud Architecture
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.82rem;">
+                    Target Production Architecture for Serverless, Event-Driven Satellite Ingestion
+                </p>
+            </div>
+            <span class="arch-badge-cloud">PROPOSED CLOUD DEPLOYMENT</span>
+        </div>
+
+        <div class="flow-diagram">
+            <!-- AWS 1 -->
+            <div class="flow-step-box primary">
+                <div class="flow-step-title">Amazon S3 Archive Bucket</div>
+                <div class="flow-step-desc">Raw multi-spectral satellite imagery object store</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 2 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Amazon EventBridge / S3 Event Notifications</div>
+                <div class="flow-step-desc">Publishes ObjectCreated:Put events upon upload</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 3 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Amazon SQS (Simple Queue Service)</div>
+                <div class="flow-step-desc">Buffers and throttles bursts of satellite ingestions</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 4 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">AWS Step Functions Orchestration</div>
+                <div class="flow-step-desc">State machine coordinating preprocessing, scoring, and tiering</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 5 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">AWS Lambda Preprocessing Worker</div>
+                <div class="flow-step-desc">Serverless container converting GeoTIFFs & contrast stretching</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 6 -->
+            <div class="flow-step-box ai">
+                <div class="flow-step-title">Amazon Bedrock / Vision Foundation Model</div>
+                <div class="flow-step-desc">Managed Multimodal Vision Model (e.g. Bedrock / SageMaker CLIP)</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 7 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">Importance + Confidence Engine</div>
+                <div class="flow-step-desc">Calculates semantic ranking score and classification confidence</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 8 -->
+            <div class="flow-step-box decision">
+                <div class="flow-step-title">Amazon DynamoDB Metadata Catalog</div>
+                <div class="flow-step-desc">Stores image object metadata, semantic score, tier tag</div>
+            </div>
+
+            <div class="flow-arrow-down">&darr;</div>
+
+            <!-- AWS 9 -->
+            <div class="flow-step-box">
+                <div class="flow-step-title">S3 Lifecycle Policies & Object Tagging</div>
+                <div class="flow-step-desc">Automated transitions triggered by DynamoDB stream / S3 Tagging</div>
+            </div>
+        </div>
+
+        <!-- Monitoring & Governance Row -->
+        <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+            <h4 style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px;">
+                Monitoring, Observability & Security Subsystems
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                    <strong style="color: #fff; font-size: 0.85rem; display: block;">Amazon CloudWatch</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Real-time metrics, Lambda execution logs, and lifecycle anomaly alarms</span>
+                </div>
+                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                    <strong style="color: #fff; font-size: 0.85rem; display: block;">Amazon SNS</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Automated alerts for low-confidence classifications or Glacier transitions</span>
+                </div>
+                <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                    <strong style="color: #fff; font-size: 0.85rem; display: block;">AWS IAM</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Least-privilege role policies for Lambda, Bedrock, and S3 bucket encryption</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. COMPONENT MAPPING TABLE -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Prototype to AWS Cloud Deployment Mapping</h3>
+                <span class="card-subtitle">Direct architectural correspondence between local code and cloud services</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Current Local Prototype Component</th>
+                        <th>Proposed AWS Cloud Component</th>
+                        <th>Architecture Function</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="font-mono">dataset/sample/*.tif</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">Amazon S3 Ingest Bucket</span></td>
+                        <td>Raw satellite TIFF object repository</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">src/ai_model/preprocessing.py</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">AWS Lambda (Container Image)</span></td>
+                        <td>Dynamic range contrast stretching and resize</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">OpenAI CLIP ViT-B/32 (PyTorch)</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">Amazon Bedrock / SageMaker</span></td>
+                        <td>Vision Foundation Model zero-shot semantic inference</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">results/importance_scores.csv</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">Amazon DynamoDB</span></td>
+                        <td>High-throughput object metadata and scoring store</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">cloud_simulation/{Tiers}</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">S3 Standard / Standard-IA / Glacier</span></td>
+                        <td>Multi-tier cost-optimized storage classes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">src/cloud/s3_lifecycle.py</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">S3 Lifecycle Rule Configuration</span></td>
+                        <td>Automated object storage class transition engine</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">results/lifecycle_log.csv</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">Amazon CloudWatch & S3 Access Logs</span></td>
+                        <td>Audit trail and transition telemetry</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-mono">web/app.py (IntelliArchive)</span></td>
+                        <td><span class="font-mono" style="color: var(--accent-blue);">AWS ECS / App Runner / CloudWatch Dashboards</span></td>
+                        <td>Cloud management console and analytics portal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

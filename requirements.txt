@@ -4,3 +4,7 @@ torch
 torchvision
 transformers
 matplotlib
+fastapi
+uvicorn
+jinja2
+python-multipart

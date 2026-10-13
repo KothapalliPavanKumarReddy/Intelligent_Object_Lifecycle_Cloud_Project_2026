@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Statistical KPI Overview -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
+    <!-- Average Score -->
+    <div class="kpi-card total">
+        <div class="kpi-header">
+            <span class="kpi-title">Average Score</span>
+            <div class="kpi-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+        </div>
+        <div class="kpi-value">{{ "%.2f"|format(summary.avg_score) }}</div>
+        <div class="kpi-footer">
+            <span>Median: {{ "%.2f"|format(summary.median_score) }}</span>
+            <span style="color: var(--text-muted);">&sigma; = {{ "%.2f"|format(summary.std_score) }}</span>
+        </div>
+    </div>
+
+    <!-- Maximum Score -->
+    <div class="kpi-card high">
+        <div class="kpi-header">
+            <span class="kpi-title">Maximum Score</span>
+            <div class="kpi-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+            </div>
+        </div>
+        <div class="kpi-value" style="color: var(--color-high);">{{ "%.2f"|format(summary.max_score) }}</div>
+        <div class="kpi-footer">
+            <span class="font-mono" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                {{ summary.highest_image }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Minimum Score -->
+    <div class="kpi-card low">
+        <div class="kpi-header">
+            <span class="kpi-title">Minimum Score</span>
+            <div class="kpi-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+        </div>
+        <div class="kpi-value" style="color: #94a3b8;">{{ "%.2f"|format(summary.min_score) }}</div>
+        <div class="kpi-footer">
+            <span class="font-mono" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                {{ summary.lowest_image }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Storage Cost Savings -->
+    <div class="kpi-card standard">
+        <div class="kpi-header">
+            <span class="kpi-title">Cost Efficiency</span>
+            <div class="kpi-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+        </div>
+        <div class="kpi-value" style="color: var(--accent-blue);">{{ cost_model.savings_pct }}%</div>
+        <div class="kpi-footer">
+            <span>vs. Flat S3 Standard</span>
+            <span style="color: var(--color-high);">${{ "%.2f"|format(cost_model.monthly_savings_per_tb) }}/TB/mo</span>
+        </div>
+    </div>
+</div>
+
+<!-- 4 Rich Analytics Charts -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- 1. Full Semantic Scores Bar Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Archive Importance Score Rankings</h3>
+                <span class="card-subtitle">Zero-shot semantic scores derived from OpenAI CLIP model</span>
+            </div>
+        </div>
+        <div class="chart-wrapper" style="min-height: 320px;">
+            <canvas id="analyticsScoreChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 2. Score Histogram -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Score Frequency Histogram</h3>
+                <span class="card-subtitle">Distribution across 5 score intervals (0 to 100)</span>
+            </div>
+        </div>
+        <div class="chart-wrapper" style="min-height: 320px;">
+            <canvas id="analyticsHistogramChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- 3. Category Donut -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Category Percentage Breakdown</h3>
+                <span class="card-subtitle">HIGH (&ge; 70), MEDIUM (&ge; 40), LOW (&lt; 40)</span>
+            </div>
+        </div>
+        <div class="chart-wrapper" style="min-height: 280px;">
+            <canvas id="analyticsCatDonut"></canvas>
+        </div>
+    </div>
+
+    <!-- 4. Storage Tier Donut -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Storage Tier Proportion</h3>
+                <span class="card-subtitle">S3_STANDARD / S3_STANDARD_IA / S3_GLACIER</span>
+            </div>
+        </div>
+        <div class="chart-wrapper" style="min-height: 280px;">
+            <canvas id="analyticsTierDonut"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Cost Model Details Card -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Cloud Architecture Storage Cost Optimization Model
+            </h3>
+            <span class="card-subtitle">Projected monthly AWS S3 storage pricing comparison</span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div style="background: var(--bg-surface-elevated); padding: 20px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Standard Un-tiered Baseline</span>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #fff; margin: 6px 0;" class="font-mono">
+                ${{ "%.2f"|format(cost_model.baseline_cost_per_tb) }} <span style="font-size: 0.8rem; color: var(--text-muted);">/ TB / Month</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary);">
+                Assuming 100% of satellite TIFF archives retained indiscriminately in S3 Standard ($0.023 / GB).
+            </p>
+        </div>
+
+        <div style="background: var(--bg-surface-elevated); padding: 20px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.3);">
+            <span style="font-size: 0.75rem; color: var(--accent-blue); text-transform: uppercase;">IntelliArchive Optimized Tiering</span>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-blue); margin: 6px 0;" class="font-mono">
+                ${{ "%.2f"|format(cost_model.optimized_cost_per_tb) }} <span style="font-size: 0.8rem; color: var(--text-muted);">/ TB / Month</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary);">
+                Blended rate according to current semantic importance distribution across Standard, Standard-IA, and Glacier.
+            </p>
+        </div>
+
+        <div style="background: var(--bg-surface-elevated); padding: 20px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <span style="font-size: 0.75rem; color: var(--color-high); text-transform: uppercase;">Projected Cloud Savings</span>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-high); margin: 6px 0;" class="font-mono">
+                {{ cost_model.savings_pct }}%
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary);">
+                Saves approx. <strong>${{ "%.2f"|format(cost_model.monthly_savings_per_tb) }}</strong> per Terabyte monthly for enterprise satellite imagery archives.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

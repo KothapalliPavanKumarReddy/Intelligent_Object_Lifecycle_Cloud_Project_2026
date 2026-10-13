@@ -1,22 +1,40 @@
 from pathlib import Path
+import numpy as np
 from PIL import Image
 
-# Project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-# Dataset folders
 INPUT_DIR = PROJECT_ROOT / "dataset" / "sample"
 OUTPUT_DIR = PROJECT_ROOT / "dataset" / "processed"
 
-# Create output folder
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Target image size for the vision model
 IMAGE_SIZE = (224, 224)
 
 
-def preprocess_images():
+def enhance_image(image):
+    """Stretch the image's actual pixel range to 0-255 for visualization."""
+    array = np.asarray(image).astype(np.float32)
 
+    enhanced = np.zeros_like(array)
+
+    for channel in range(3):
+        channel_data = array[:, :, channel]
+        min_value = channel_data.min()
+        max_value = channel_data.max()
+
+        if max_value > min_value:
+            enhanced[:, :, channel] = (
+                (channel_data - min_value)
+                / (max_value - min_value)
+                * 255
+            )
+        else:
+            enhanced[:, :, channel] = channel_data
+
+    return Image.fromarray(enhanced.astype(np.uint8), "RGB")
+
+
+def preprocess_images():
     image_files = list(INPUT_DIR.glob("*.tif"))
 
     if not image_files:
@@ -26,21 +44,20 @@ def preprocess_images():
     processed_count = 0
 
     for image_path in image_files:
-
         try:
             print(f"Processing: {image_path.name}")
 
-            # Open satellite image
             image = Image.open(image_path).convert("RGB")
 
-            # Resize for vision model
+            # Contrast stretch for the low-range satellite pixel values
+            image = enhance_image(image)
+
+            # Resize for CLIP
             image = image.resize(IMAGE_SIZE)
 
-            # Output filename
             output_name = f"{image_path.stem}_processed.jpg"
             output_path = OUTPUT_DIR / output_name
 
-            # Save processed image
             image.save(output_path, "JPEG", quality=95)
 
             processed_count += 1

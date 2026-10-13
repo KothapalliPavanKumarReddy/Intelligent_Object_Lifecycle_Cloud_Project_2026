@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} | IntelliArchive — Satellite Object Lifecycle Optimization</title>
+    <meta name="description" content="IntelliArchive: AI-Powered Satellite Object Lifecycle Optimization using Vision Foundation Models. Content-aware cloud archive tiering.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Platform Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="brand-section">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z"/>
+                        <path d="M3.6 9h16.8"/>
+                        <path d="M3.6 15h16.8"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>IntelliArchive</h1>
+                    <p>Satellite Lifecycle Optimizer</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" id="nav-dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/analyze" class="nav-link {% if active_page == 'analyze' %}active{% endif %}" id="nav-analyze">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Analyze Image</span>
+                </a>
+                <a href="/archive" class="nav-link {% if active_page == 'archive' %}active{% endif %}" id="nav-archive">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                    <span>Archive</span>
+                </a>
+                <a href="/analytics" class="nav-link {% if active_page == 'analytics' %}active{% endif %}" id="nav-analytics">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="/architecture" class="nav-link {% if active_page == 'architecture' %}active{% endif %}" id="nav-architecture">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    <span>Architecture</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status-pill">
+                    <div class="pulse-dot"></div>
+                    <div>
+                        <strong style="color: #e2e8f0; display:block;">CLIP ViT-B/32 Active</strong>
+                        <span>Simulation Sync: Local</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport -->
+        <main class="app-main">
+            <!-- Top App Header -->
+            <header class="app-header">
+                <div class="header-title-block">
+                    <h2>{{ page_title }}</h2>
+                    <span>IntelliArchive &bull; AI-Powered Satellite Object Lifecycle Optimization</span>
+                </div>
+
+                <!-- Central Pipeline Logic Indicator -->
+                <div class="pipeline-banner">
+                    <div class="pipeline-step {% if active_page == 'analyze' %}active{% endif %}">
+                        <span>AI ANALYSIS</span>
+                    </div>
+                    <span class="pipeline-arrow">&rarr;</span>
+                    <div class="pipeline-step">
+                        <span>IMPORTANCE</span>
+                    </div>
+                    <span class="pipeline-arrow">&rarr;</span>
+                    <div class="pipeline-step {% if active_page == 'archive' or active_page == 'dashboard' %}active{% endif %}">
+                        <span>STORAGE DECISION</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <a href="/analyze" class="btn btn-primary btn-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Analyze New</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Dynamic Body Content -->
+            <div class="content-body">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Image Inspection Modal -->
+    <div class="modal-overlay" id="imageModal" onclick="if(event.target === this) closeImageModal()">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modalTitle" style="color: #fff; font-size: 1.1rem; word-break: break-all;">Satellite Image Details</h3>
+                    <p style="color: var(--text-muted); font-size: 0.78rem;">Object Lifecycle & Storage Class Inspection</p>
+                </div>
+                <button class="modal-close-btn" onclick="closeImageModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px;">
+                    <div>
+                        <img id="modalImage" src="" alt="Satellite Object" style="width: 100%; height: 320px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); background: #000;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <div style="background: var(--bg-surface-elevated); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Semantic Importance Score</span>
+                            <div style="font-size: 2.2rem; font-weight: 800; font-family: var(--font-mono); color: #fff;" id="modalScore">--</div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="background: var(--bg-surface-elevated); padding: 12px; border-radius: 6px;">
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Category</span>
+                                <div style="margin-top: 4px;"><span id="modalCategory" class="badge">--</span></div>
+                            </div>
+                            <div style="background: var(--bg-surface-elevated); padding: 12px; border-radius: 6px;">
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Storage Tier</span>
+                                <div style="margin-top: 4px;"><span id="modalStorage" class="badge">--</span></div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-surface-elevated); padding: 12px; border-radius: 6px; font-size: 0.8rem;">
+                            <div style="color: var(--text-muted); margin-bottom: 2px;">Simulated Bucket Location:</div>
+                            <div class="font-mono" style="color: var(--accent-blue); word-break: break-all;" id="modalSimPath">--</div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.8rem;">
+                            <div>
+                                <span style="color: var(--text-muted);">File Size:</span>
+                                <span style="color: #fff; font-weight: 600;" id="modalSize">--</span>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted);">Status Action:</span>
+                                <span style="color: #fff; font-weight: 600;" id="modalAction">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Application Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

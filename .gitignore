@@ -31,3 +31,6 @@ dataset/processed/
 
 dataset/SN3_roads_sample.tar.gz
 dataset/SpaceNet_Roads_Sample/
+
+# Local web uploads
+web/uploads/
