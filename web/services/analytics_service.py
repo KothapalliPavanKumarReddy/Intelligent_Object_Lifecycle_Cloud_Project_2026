@@ -12,6 +12,13 @@ PROCESSED_DIR = PROJECT_ROOT / "dataset" / "processed"
 SAMPLE_DIR = PROJECT_ROOT / "dataset" / "sample"
 CLOUD_DIR = PROJECT_ROOT / "cloud_simulation"
 
+# Mirror of lifecycle_service.STORAGE_DIRS to avoid a circular import.
+_STORAGE_DIRS = {
+    "S3_STANDARD": CLOUD_DIR / "S3_STANDARD",
+    "S3_STANDARD_IA": CLOUD_DIR / "S3_STANDARD_IA",
+    "S3_GLACIER": CLOUD_DIR / "S3_GLACIER",
+}
+
 
 class AnalyticsService:
     """
@@ -190,6 +197,13 @@ class AnalyticsService:
         """
         Returns rich image archive records combining processed images,
         scores, and lifecycle logs.
+
+        ``actual_storage_tier`` reflects the real on-disk location across all
+        three simulation tier folders — not just the value stored in the CSV,
+        which may lag after a tier transition.  ``exists_in_cloud`` is True
+        only when the file is physically present in at least one tier folder.
+        ``missing_from_cloud`` is True when the CSV says it should be archived
+        but no tier folder contains the file.
         """
         df_scores = self.load_scores_dataframe()
         df_lifecycle = self.load_lifecycle_dataframe()
@@ -206,7 +220,7 @@ class AnalyticsService:
         for _, row in df_scores.iterrows():
             img_name = str(row["image_name"])
             cat = str(row["category"])
-            s_class = str(row["storage_class"])
+            s_class = str(row["storage_class"])  # CSV-stated tier (may be stale)
             score = float(row["importance_score"])
 
             # Filters
@@ -218,13 +232,31 @@ class AnalyticsService:
                 continue
 
             processed_path = PROCESSED_DIR / img_name
-            sim_tier_path = CLOUD_DIR / s_class / img_name
 
+            # --- Ground-truth tier detection: scan all tier folders -----------
+            actual_tier: Optional[str] = None
+            actual_tier_path: Optional[Path] = None
+            for tier, tier_dir in _STORAGE_DIRS.items():
+                candidate = tier_dir / img_name
+                if candidate.exists():
+                    actual_tier = tier
+                    actual_tier_path = candidate
+                    break  # only one tier should hold the file after a valid store
+
+            exists_in_cloud = actual_tier is not None
+            # The file is "missing" when the CSV promises cloud storage but the
+            # disk has no copy in any tier folder.
+            missing_from_cloud = (not exists_in_cloud)
+
+            # Use the ground-truth tier for display when available
+            display_tier = actual_tier if actual_tier else s_class
+
+            # File size: prefer the cloud copy, fall back to processed dir
             file_size_kb = 0.0
-            if processed_path.exists():
+            if actual_tier_path and actual_tier_path.exists():
+                file_size_kb = round(actual_tier_path.stat().st_size / 1024, 1)
+            elif processed_path.exists():
                 file_size_kb = round(processed_path.stat().st_size / 1024, 1)
-            elif sim_tier_path.exists():
-                file_size_kb = round(sim_tier_path.stat().st_size / 1024, 1)
 
             # Corresponding raw sample TIFF
             base_stem = img_name.replace("_processed.jpg", "")
@@ -238,15 +270,17 @@ class AnalyticsService:
                 "image_name": img_name,
                 "importance_score": score,
                 "category": cat,
-                "storage_class": s_class,
-                "action": action_map.get(img_name, f"Copied to {s_class}"),
+                "storage_class": display_tier,
+                "actual_storage_tier": actual_tier,   # None when missing from cloud
+                "action": action_map.get(img_name, f"Copied to {display_tier}"),
                 "file_size_kb": file_size_kb,
                 "processed_url": f"/images/processed/{img_name}",
                 "thumbnail_url": thumbnail_url,
                 "preview_url": thumbnail_url,
                 "sample_tiff": sample_tiff_name if sample_exists else None,
-                "exists_in_cloud": sim_tier_path.exists(),
-                "lifecycle_status": "Active Archive" if sim_tier_path.exists() else "Preprocessed"
+                "exists_in_cloud": exists_in_cloud,
+                "missing_from_cloud": missing_from_cloud,
+                "lifecycle_status": "Active Archive" if exists_in_cloud else "Preprocessed",
             })
 
         return items

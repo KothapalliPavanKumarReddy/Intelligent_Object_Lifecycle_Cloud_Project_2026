@@ -19,6 +19,9 @@ STORAGE_DIRS = {
     "S3_GLACIER": CLOUD_DIR / "S3_GLACIER",
 }
 
+# The only accepted tier names; any other value is rejected.
+SUPPORTED_TIERS = frozenset(STORAGE_DIRS.keys())
+
 
 class BaseStorageService(ABC):
     """Abstract interface for satellite cloud storage lifecycle management."""
@@ -86,32 +89,64 @@ class LocalSimulationStorageService(BaseStorageService):
         """
         Place image in the designated simulated storage tier directory
         and append record to results/lifecycle_log.csv and results/importance_scores.csv.
+
+        Returns a dict with key ``error`` (and HTTP-compatible ``status_code``) when
+        the operation cannot be completed; callers must check for this key.
         """
-        target_dir = STORAGE_DIRS.get(storage_class, STORAGE_DIRS["S3_STANDARD"])
+        # --- 1. Validate storage class ----------------------------------------
+        if storage_class not in SUPPORTED_TIERS:
+            return {
+                "error": (
+                    f"Invalid storage class '{storage_class}'. "
+                    f"Supported tiers are: {', '.join(sorted(SUPPORTED_TIERS))}."
+                ),
+                "status_code": 400,
+                "image_name": image_name,
+            }
+
+        # --- 2. Require source image to exist ---------------------------------
+        source_path = Path(source_path)
+        if not source_path.exists():
+            return {
+                "error": (
+                    f"Source image '{source_path.name}' does not exist at "
+                    f"'{source_path}'. Cannot record a copy that was never made."
+                ),
+                "status_code": 404,
+                "image_name": image_name,
+            }
+
+        # --- 3. Copy to the target tier ---------------------------------------
+        target_dir = STORAGE_DIRS[storage_class]
         target_dir.mkdir(parents=True, exist_ok=True)
         dest_path = target_dir / image_name
+        shutil.copy2(source_path, dest_path)
+        action = f"Copied to {storage_class}"
 
-        action = "Placed in simulated storage"
-        if source_path.exists():
-            shutil.copy2(source_path, dest_path)
-            action = f"Copied to {storage_class}"
+        # --- 4. Remove stale copies from other tiers -------------------------
+        for tier, tier_path in STORAGE_DIRS.items():
+            if tier == storage_class:
+                continue
+            stale = tier_path / image_name
+            if stale.exists():
+                stale.unlink()
 
+        # --- 5. Build the canonical record ------------------------------------
         new_record = {
             "image_name": image_name,
             "importance_score": round(score, 2),
             "category": category,
             "storage_class": storage_class,
-            "action": action
+            "action": action,
         }
 
-        # Update lifecycle_log.csv
+        # --- 6. Update lifecycle_log.csv (one row per image_name) ------------
         records = self.get_lifecycle_log()
-        # Avoid duplicate consecutive log if re-running same file
         records = [r for r in records if r.get("image_name") != image_name]
         records.append(new_record)
         pd.DataFrame(records).to_csv(LOG_FILE, index=False)
 
-        # Update importance_scores.csv
+        # --- 7. Update importance_scores.csv (one row per image_name) --------
         self._update_importance_scores(image_name, score, category, storage_class)
 
         return new_record
