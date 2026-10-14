@@ -12,6 +12,7 @@ from PIL import Image
 from web.services.analysis_service import clip_service, enhance_satellite_image
 from web.services.lifecycle_service import lifecycle_service
 from web.services.analytics_service import analytics_service
+from web.services.s3_service import s3_service
 
 # Project root dynamically resolved
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -421,6 +422,37 @@ async def api_analyze(
             detail=f"AI model inference failed: {str(e)}"
         )
 
+
+@app.get("/api/s3/objects")
+async def api_s3_objects():
+    """List images in the private AWS S3 bucket."""
+    result = s3_service.list_objects(prefix="satellite-images/")
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=502,
+            detail=result.get("error", "S3 listing failed"),
+        )
+    return result
+
+
+@app.post("/api/s3/upload/{filename}")
+async def api_s3_upload(filename: str):
+    """Upload a processed image to private S3 storage."""
+    sanitized = Path(filename).name
+    if sanitized != filename or sanitized in ("", ".", ".."):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    source_path = DATASET_PROCESSED_DIR / sanitized
+    if not source_path.is_file():
+        raise HTTPException(status_code=404, detail="Processed image not found")
+
+    result = s3_service.upload_file(source_path)
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=502,
+            detail=result.get("error", "S3 upload failed"),
+        )
+    return result
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,16 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<!-- Real AWS S3 Storage Panel -->
+<section class="glass-panel"
+    style="margin-bottom: 24px; padding: 24px; border: 1px solid var(--border-subtle); border-radius: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; color: var(--text-primary);">AWS S3 Storage</h2>
+            <p style="margin: 8px 0 0; color: var(--text-muted);">
+                Real objects stored in your private AWS S3 bucket.
+            </p>
+        </div>
+        <button type="button" class="btn btn-primary" id="refreshS3Button">
+            Refresh S3 Objects
+        </button>
+    </div>
+
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 20px;">
+        <label for="s3UploadFilename" style="color: var(--text-muted);">
+            Processed image:
+        </label>
+
+        <select id="s3UploadFilename" style="flex: 1; min-width: 220px; padding: 10px; border-radius: 6px;">
+            <option value="">Loading processed images...</option>
+        </select>
+
+        <button type="button" class="btn btn-primary" id="uploadS3Button">
+            Upload to S3
+        </button>
+    </div>
+
+
+    <div id="s3Status" role="status" aria-live="polite" style="margin-top: 16px; color: var(--text-muted);">
+        Click “Refresh S3 Objects” to load files from AWS.
+    </div>
+
+    <div style="overflow-x: auto; margin-top: 16px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; border-bottom: 1px solid var(--border-subtle);">
+                    <th style="padding: 12px;">Object key</th>
+                    <th style="padding: 12px;">Size</th>
+                    <th style="padding: 12px;">S3 storage class</th>
+                </tr>
+            </thead>
+            <tbody id="s3ObjectsTableBody">
+                <tr>
+                    <td colspan="3" style="padding: 12px; color: var(--text-muted);">
+                        No objects loaded yet.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
 <!-- Search and Filter Toolbar -->
 <div class="filter-toolbar">
     <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
         <!-- Category Filter Pills -->
         <div class="filter-group">
             <span class="filter-label">Category:</span>
-            <button class="filter-pill cat-filter-pill {% if current_category == 'ALL' %}active{% endif %}" data-filter="ALL">All</button>
-            <button class="filter-pill cat-filter-pill {% if current_category == 'HIGH' %}active{% endif %}" data-filter="HIGH">HIGH ({{ summary.categories.HIGH }})</button>
-            <button class="filter-pill cat-filter-pill {% if current_category == 'MEDIUM' %}active{% endif %}" data-filter="MEDIUM">MEDIUM ({{ summary.categories.MEDIUM }})</button>
-            <button class="filter-pill cat-filter-pill {% if current_category == 'LOW' %}active{% endif %}" data-filter="LOW">LOW ({{ summary.categories.LOW }})</button>
+            <button class="filter-pill cat-filter-pill {% if current_category == 'ALL' %}active{% endif %}"
+                data-filter="ALL">All</button>
+            <button class="filter-pill cat-filter-pill {% if current_category == 'HIGH' %}active{% endif %}"
+                data-filter="HIGH">HIGH ({{ summary.categories.HIGH }})</button>
+            <button class="filter-pill cat-filter-pill {% if current_category == 'MEDIUM' %}active{% endif %}"
+                data-filter="MEDIUM">MEDIUM ({{ summary.categories.MEDIUM }})</button>
+            <button class="filter-pill cat-filter-pill {% if current_category == 'LOW' %}active{% endif %}"
+                data-filter="LOW">LOW ({{ summary.categories.LOW }})</button>
         </div>
 
         <div style="height: 20px; width: 1px; background: var(--border-subtle);"></div>
@@ -18,57 +78,63 @@
         <!-- Storage Tier Filter Pills -->
         <div class="filter-group">
             <span class="filter-label">Storage:</span>
-            <button class="filter-pill tier-filter-pill {% if current_storage == 'ALL' %}active{% endif %}" data-filter="ALL">All</button>
-            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_STANDARD' %}active{% endif %}" data-filter="S3_STANDARD">S3_STANDARD ({{ summary.storage_classes.S3_STANDARD }})</button>
-            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_STANDARD_IA' %}active{% endif %}" data-filter="S3_STANDARD_IA">S3_STANDARD_IA ({{ summary.storage_classes.S3_STANDARD_IA }})</button>
-            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_GLACIER' %}active{% endif %}" data-filter="S3_GLACIER">S3_GLACIER ({{ summary.storage_classes.S3_GLACIER }})</button>
+            <button class="filter-pill tier-filter-pill {% if current_storage == 'ALL' %}active{% endif %}"
+                data-filter="ALL">All</button>
+            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_STANDARD' %}active{% endif %}"
+                data-filter="S3_STANDARD">S3_STANDARD ({{ summary.storage_classes.S3_STANDARD }})</button>
+            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_STANDARD_IA' %}active{% endif %}"
+                data-filter="S3_STANDARD_IA">S3_STANDARD_IA ({{ summary.storage_classes.S3_STANDARD_IA }})</button>
+            <button class="filter-pill tier-filter-pill {% if current_storage == 'S3_GLACIER' %}active{% endif %}"
+                data-filter="S3_GLACIER">S3_GLACIER ({{ summary.storage_classes.S3_GLACIER }})</button>
         </div>
     </div>
 
     <!-- Search Input -->
     <div class="search-input-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="archiveSearchInput" class="search-input" placeholder="Search archive by filename..." value="{{ current_search }}">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" id="archiveSearchInput" class="search-input" placeholder="Search archive by filename..."
+            value="{{ current_search }}">
     </div>
 </div>
 
 <!-- Archive Items Grid View -->
 <div class="archive-grid" id="archiveGrid">
     {% for item in items %}
-    <div class="archive-card archive-item-card" 
-         data-name="{{ item.image_name }}" 
-         data-category="{{ item.category }}" 
-         data-storage="{{ item.storage_class }}"
-         onclick="openImageModal('{{ item.image_name }}')">
-        
-        <img src="{{ item.thumbnail_url or item.processed_url }}" 
-             alt="{{ item.image_name }}" 
-             class="archive-card-thumb" 
-             loading="lazy"
-             onerror="this.src='/static/images/satellite_icon.png'">
-        
+    <div class="archive-card archive-item-card" data-name="{{ item.image_name }}" data-category="{{ item.category }}"
+        data-storage="{{ item.storage_class }}" onclick="openImageModal('{{ item.image_name }}')">
+
+        <img src="{{ item.thumbnail_url or item.processed_url }}" alt="{{ item.image_name }}" class="archive-card-thumb"
+            loading="lazy" onerror="this.src='/static/images/satellite_icon.png'">
+
         <div class="archive-card-body">
             <div style="display: flex; align-items: center; justify-content: space-between;">
                 <span class="badge badge-{{ item.category|lower }}">{{ item.category }}</span>
                 {% if item.storage_class == 'S3_STANDARD' %}
-                    <span class="badge badge-s3-standard">{{ item.storage_class }}</span>
+                <span class="badge badge-s3-standard">{{ item.storage_class }}</span>
                 {% elif item.storage_class == 'S3_STANDARD_IA' %}
-                    <span class="badge badge-s3-ia">{{ item.storage_class }}</span>
+                <span class="badge badge-s3-ia">{{ item.storage_class }}</span>
                 {% else %}
-                    <span class="badge badge-s3-glacier">{{ item.storage_class }}</span>
+                <span class="badge badge-s3-glacier">{{ item.storage_class }}</span>
                 {% endif %}
             </div>
 
             <div class="archive-card-title font-mono">{{ item.image_name }}</div>
 
-            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+            <div
+                style="display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
                 <div>
                     <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Score</span>
-                    <div class="font-mono" style="font-size: 1.25rem; font-weight: 700; color: #fff;">{{ "%.2f"|format(item.importance_score) }}</div>
+                    <div class="font-mono" style="font-size: 1.25rem; font-weight: 700; color: #fff;">{{
+                        "%.2f"|format(item.importance_score) }}</div>
                 </div>
 
                 <div style="text-align: right;">
-                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Lifecycle Status</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Lifecycle
+                        Status</span>
                     <div style="font-size: 0.78rem; color: var(--accent-blue); font-weight: 500;">
                         {{ item.lifecycle_status }}
                     </div>
@@ -77,9 +143,11 @@
         </div>
     </div>
     {% else %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px;">
+    <div
+        style="grid-column: 1 / -1; text-align: center; padding: 48px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px;">
         <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">No matching images found</h4>
-        <p style="color: var(--text-muted); font-size: 0.85rem;">Adjust search filters or analyze new satellite images in the Analyze tab.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Adjust search filters or analyze new satellite images
+            in the Analyze tab.</p>
     </div>
     {% endfor %}
 </div>

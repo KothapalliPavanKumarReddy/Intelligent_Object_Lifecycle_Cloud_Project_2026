@@ -444,7 +444,7 @@ function initAnalyzePage() {
 
         // Update score
         document.getElementById('resScoreVal').textContent = data.importance_score.toFixed(2);
-        
+
         // Update category badge
         const catBadge = document.getElementById('resCategoryBadge');
         catBadge.textContent = data.category;
@@ -548,7 +548,7 @@ function initArchiveFilter() {
 }
 
 // Image Detail Modal Handler
-window.openImageModal = async function(filename) {
+window.openImageModal = async function (filename) {
     const modal = document.getElementById('imageModal');
     if (!modal) return;
 
@@ -560,7 +560,7 @@ window.openImageModal = async function(filename) {
         document.getElementById('modalTitle').textContent = item.image_name;
         document.getElementById('modalImage').src = item.thumbnail_url || item.processed_url;
         document.getElementById('modalScore').textContent = item.importance_score.toFixed(2);
-        
+
         const catBadge = document.getElementById('modalCategory');
         catBadge.textContent = item.category;
         catBadge.className = `badge badge-${item.category.toLowerCase()}`;
@@ -574,14 +574,167 @@ window.openImageModal = async function(filename) {
         document.getElementById('modalSize').textContent = item.file_size_kb + ' KB';
         document.getElementById('modalAction').textContent = item.action;
         document.getElementById('modalSimPath').textContent = `cloud_simulation/${item.storage_class}/${item.image_name}`;
-        
+
         modal.classList.add('active');
     } catch (err) {
         console.error("Modal fetch error:", err);
     }
 };
 
-window.closeImageModal = function() {
+window.closeImageModal = function () {
     const modal = document.getElementById('imageModal');
     if (modal) modal.classList.remove('active');
 };
+
+
+function initS3ArchivePanel() {
+    const refreshButton = document.getElementById("refreshS3Button");
+    const status = document.getElementById("s3Status");
+    const tableBody = document.getElementById("s3ObjectsTableBody");
+    const uploadButton = document.getElementById("uploadS3Button");
+    const filenameSelect = document.getElementById("s3UploadFilename");
+
+    if (!refreshButton || !status || !tableBody) return;
+    if (!uploadButton || !filenameSelect) return;
+
+
+    refreshButton.addEventListener("click", async () => {
+        refreshButton.disabled = true;
+        status.textContent = "Loading objects from AWS S3...";
+        tableBody.replaceChildren();
+
+        try {
+            const response = await fetch("/api/s3/objects");
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || "Unable to load S3 objects.");
+            }
+
+            if (!data.success) {
+                throw new Error(data.error || "Unable to load S3 objects.");
+            }
+
+            status.textContent =
+                `${data.count} object(s) found in bucket ${data.bucket}.`;
+
+            if (data.objects.length === 0) {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 3;
+                cell.textContent = "No objects found in this S3 prefix.";
+                return;
+            }
+
+            data.objects.forEach((object) => {
+                const row = tableBody.insertRow();
+
+                const keyCell = row.insertCell();
+                keyCell.textContent = object.key;
+
+                const sizeCell = row.insertCell();
+                sizeCell.textContent =
+                    `${(object.size_bytes / 1024).toFixed(1)} KB`;
+
+                const classCell = row.insertCell();
+                classCell.textContent = object.storage_class;
+            });
+        } catch (error) {
+            status.textContent = `S3 error: ${error.message}`;
+        } finally {
+            refreshButton.disabled = false;
+        }
+    });
+
+    // Load processed image filenames into the upload dropdown.
+    async function loadProcessedImages() {
+        filenameSelect.replaceChildren();
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Loading processed images...";
+        filenameSelect.appendChild(placeholder);
+
+        try {
+            const response = await fetch("/api/images");
+            if (!response.ok) {
+                throw new Error("Could not load processed images.");
+            }
+
+            const data = await response.json();
+            filenameSelect.replaceChildren();
+
+            const images = (data.items || [])
+                .filter(item => item.image_name)
+                .map(item => item.image_name);
+
+            if (images.length === 0) {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "No processed images found";
+                filenameSelect.appendChild(option);
+                return;
+            }
+
+            images.forEach(filename => {
+                const option = document.createElement("option");
+                option.value = filename;
+                option.textContent = filename;
+                filenameSelect.appendChild(option);
+            });
+        } catch (error) {
+            filenameSelect.replaceChildren();
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "Unable to load images";
+            filenameSelect.appendChild(option);
+            status.textContent = error.message;
+        }
+    }
+
+    loadProcessedImages();
+
+    // Upload the selected processed image to real AWS S3.
+    uploadButton.addEventListener("click", async () => {
+        const filename = filenameSelect.value;
+
+        if (!filename) {
+            status.textContent = "Please select a processed image first.";
+            return;
+        }
+
+        uploadButton.disabled = true;
+        status.textContent = `Uploading ${filename} to AWS S3...`;
+
+        try {
+            const response = await fetch(
+                `/api/s3/upload/${encodeURIComponent(filename)}`,
+                { method: "POST" }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "S3 upload failed.");
+            }
+
+            status.textContent =
+                `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;
+
+            // Refresh the real S3 object list after uploading.
+            setTimeout(() => {
+                status.textContent =
+                    `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;
+            }, 500);
+            refreshButton.click();
+        } catch (error) {
+            status.textContent = `Upload error: ${error.message}`;
+        } finally {
+            uploadButton.disabled = false;
+        }
+    });
+
+
+}
+
+document.addEventListener("DOMContentLoaded", initS3ArchivePanel);
