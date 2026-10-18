@@ -1,0 +1,37 @@
+# Python / build artifacts
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb
+.ipynb_checkpoints/
+.pytest_cache/
+tests/
+presentation/
+architecture/
+docs/
+
+# Version control & OS metadata
+.git/
+.gitignore
+.dockerignore
+.DS_Store
+Thumbs.db
+
+# Secrets & Local credentials
+.env*
+.aws/
+*credentials*
+*id_rsa*
+*.pem
+
+# Large raw archive tarballs and non-web SpaceNet sample extracts
+dataset/raw/
+dataset/SN3_roads_sample.tar.gz
+dataset/SpaceNet_Roads_Sample/
+
+# Local temporary uploads & caches
+web/uploads/*
+!web/uploads/.gitkeep
+.cache/
+*.tmp

@@ -8,6 +8,7 @@ made and no real files are uploaded.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch, PropertyMock
@@ -348,3 +349,110 @@ class TestClientConstruction:
         svc = S3Service()
         assert svc.bucket == mod.BUCKET_NAME
         assert svc.region == mod.AWS_REGION
+
+    @patch("web.services.s3_service.boto3.Session")
+    def test_ecs_environment_empty_aws_profile_env_var(self, mock_session_cls, monkeypatch):
+        """Regression test for ECS: when AWS_PROFILE="" in env, no profile_name is passed."""
+        monkeypatch.setenv("AWS_PROFILE", "")
+        import importlib
+        import web.services.s3_service as mod
+        importlib.reload(mod)
+
+        mock_session = MagicMock()
+        mock_session.client.return_value = MagicMock()
+        mock_session_cls.return_value = mock_session
+
+        svc = mod.S3Service()
+        svc._get_client()
+
+        mock_session_cls.assert_called_once()
+        call_kwargs = mock_session_cls.call_args[1]
+        assert "profile_name" not in call_kwargs
+
+    @patch("web.services.s3_service.boto3.Session")
+    def test_ecs_environment_whitespace_aws_profile_env_var(self, mock_session_cls, monkeypatch):
+        """When AWS_PROFILE="   " in env, no profile_name is passed."""
+        monkeypatch.setenv("AWS_PROFILE", "   ")
+        import importlib
+        import web.services.s3_service as mod
+        importlib.reload(mod)
+
+        mock_session = MagicMock()
+        mock_session.client.return_value = MagicMock()
+        mock_session_cls.return_value = mock_session
+
+        svc = mod.S3Service()
+        svc._get_client()
+
+        mock_session_cls.assert_called_once()
+        call_kwargs = mock_session_cls.call_args[1]
+        assert "profile_name" not in call_kwargs
+
+    @patch("web.services.s3_service.boto3.Session")
+    def test_named_profile_via_env_var(self, mock_session_cls, monkeypatch):
+        """When AWS_PROFILE is set to a named profile in env, it is passed to boto3.Session."""
+        monkeypatch.setenv("AWS_PROFILE", "my-custom-profile")
+        import importlib
+        import web.services.s3_service as mod
+        importlib.reload(mod)
+
+        mock_session = MagicMock()
+        mock_session.client.return_value = MagicMock()
+        mock_session_cls.return_value = mock_session
+
+        svc = mod.S3Service()
+        svc._get_client()
+
+        mock_session_cls.assert_called_once_with(
+            region_name=mod.AWS_REGION, profile_name="my-custom-profile"
+        )
+
+    def test_unmocked_boto3_session_with_empty_aws_profile_no_profile_not_found(self, monkeypatch):
+        """
+        Critical regression test without mocking boto3.Session:
+        When AWS_PROFILE="" in the environment (ECS task execution),
+        calling _get_client() with real boto3.Session must NOT raise
+        botocore.exceptions.ProfileNotFound: The config profile () could not be found.
+        """
+        import boto3
+        from botocore.exceptions import ProfileNotFound
+
+        # Verify that without sanitizing AWS_PROFILE="", boto3.Session raises ProfileNotFound
+        monkeypatch.setenv("AWS_PROFILE", "")
+        with pytest.raises(ProfileNotFound, match=r"profile \(\)"):
+            boto3.Session(region_name="ap-south-1")
+
+        # Now verify S3Service purges AWS_PROFILE and succeeds in constructing real boto3.Session
+        import importlib
+        import web.services.s3_service as mod
+        importlib.reload(mod)
+
+        svc = mod.S3Service(bucket="test-bucket", region="ap-south-1")
+        with patch.object(boto3.Session, "client", return_value=MagicMock()) as mock_client:
+            client = svc._get_client()
+            assert client is not None
+            mock_client.assert_called_once_with("s3")
+        assert "AWS_PROFILE" not in os.environ
+
+    def test_unmocked_boto3_session_with_whitespace_aws_profile_no_profile_not_found(self, monkeypatch):
+        """
+        Critical regression test without mocking boto3.Session:
+        When AWS_PROFILE="   ", calling _get_client() must NOT raise ProfileNotFound.
+        """
+        import boto3
+        from botocore.exceptions import ProfileNotFound
+
+        monkeypatch.setenv("AWS_PROFILE", "   ")
+        with pytest.raises(ProfileNotFound, match=r"profile \(   \)"):
+            boto3.Session(region_name="ap-south-1")
+
+        import importlib
+        import web.services.s3_service as mod
+        importlib.reload(mod)
+
+        svc = mod.S3Service(bucket="test-bucket", region="ap-south-1")
+        with patch.object(boto3.Session, "client", return_value=MagicMock()) as mock_client:
+            client = svc._get_client()
+            assert client is not None
+            mock_client.assert_called_once_with("s3")
+        assert "AWS_PROFILE" not in os.environ

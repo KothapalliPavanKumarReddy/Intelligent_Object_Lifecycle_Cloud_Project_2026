@@ -34,3 +34,8 @@ dataset/SpaceNet_Roads_Sample/
 
 # Local web uploads
 web/uploads/
+
+# Office temporary lock files
+~$*.docx
+~$*.pptx
+

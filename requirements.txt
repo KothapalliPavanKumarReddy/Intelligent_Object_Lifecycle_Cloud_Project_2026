@@ -1,7 +1,8 @@
+# Core data & image processing
 pandas
 Pillow
-torch
-torchvision
+# Note: torch and torchvision (CPU-only wheels) are installed directly via Dockerfile
+# using --index-url https://download.pytorch.org/whl/cpu to prevent pulling CUDA/NVIDIA wheels (~5 GB).
 transformers
 matplotlib
 fastapi

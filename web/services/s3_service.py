@@ -42,8 +42,19 @@ BUCKET_NAME: str = os.environ.get(
 AWS_REGION: str = os.environ.get("AWS_REGION", "ap-south-1")
 
 #: Named credentials profile used for local development.
-#: Set to "" or unset to rely on the default credential chain (e.g. IAM roles).
-AWS_PROFILE: str = os.environ.get("AWS_PROFILE", "intelliarchive")
+#: Defaults to "intelliarchive" when unset. If AWS_PROFILE is set but empty or whitespace,
+#: it is purged from os.environ and resolved to None so that botocore/boto3 defaults
+#: to standard credential chains (such as ECS Task Roles) without raising ProfileNotFound.
+_env_profile: Optional[str] = os.environ.get("AWS_PROFILE")
+if _env_profile is not None:
+    if not _env_profile.strip():
+        os.environ.pop("AWS_PROFILE", None)
+        AWS_PROFILE: Optional[str] = None
+    else:
+        AWS_PROFILE = _env_profile.strip()
+else:
+    # AWS_PROFILE is unset: preserve local development default
+    AWS_PROFILE = "intelliarchive"
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +84,10 @@ class S3Service:
     ) -> None:
         self.bucket: str = bucket or BUCKET_NAME
         self.region: str = region or AWS_REGION
-        self._profile: str = profile if profile is not None else AWS_PROFILE
+        resolved_profile = profile if profile is not None else AWS_PROFILE
+        self._profile: Optional[str] = (
+            resolved_profile.strip() if resolved_profile and resolved_profile.strip() else None
+        )
         self._client: Optional[Any] = None  # created lazily
 
     # ------------------------------------------------------------------
@@ -83,9 +97,15 @@ class S3Service:
     def _get_client(self) -> Any:
         """Return (and cache) the boto3 S3 client."""
         if self._client is None:
-            session_kwargs: Dict[str, str] = {"region_name": self.region}
-            if self._profile:
-                session_kwargs["profile_name"] = self._profile
+            # Defensive check: if AWS_PROFILE in os.environ is empty/whitespace, remove it
+            # so botocore internal configuration loaders do not fail with ProfileNotFound.
+            current_env_profile = os.environ.get("AWS_PROFILE")
+            if current_env_profile is not None and not current_env_profile.strip():
+                os.environ.pop("AWS_PROFILE", None)
+
+            session_kwargs: Dict[str, Any] = {"region_name": self.region}
+            if self._profile and self._profile.strip():
+                session_kwargs["profile_name"] = self._profile.strip()
             session = boto3.Session(**session_kwargs)
             self._client = session.client("s3")
         return self._client

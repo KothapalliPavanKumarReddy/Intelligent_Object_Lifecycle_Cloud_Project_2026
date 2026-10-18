@@ -1,0 +1,61 @@
+{
+  "family": "intelliarchive-web-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::371234372967:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::371234372967:role/intelliarchive-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "intelliarchive-app",
+      "image": "371234372967.dkr.ecr.ap-south-1.amazonaws.com/intelliarchive:cpu-test",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "INTELLIARCHIVE_S3_BUCKET",
+          "value": "intelliarchive-pavan-satellite-2026"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "ap-south-1"
+        },
+        {
+          "name": "AWS_PROFILE",
+          "value": ""
+        },
+        {
+          "name": "PORT",
+          "value": "8080"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/intelliarchive",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
