@@ -60,9 +60,6 @@ app = FastAPI(
 # Mount static and file directories
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-if DATASET_PROCESSED_DIR.exists():
-    app.mount("/images/processed", StaticFiles(directory=str(DATASET_PROCESSED_DIR)), name="processed_images")
-
 if DATASET_SAMPLE_DIR.exists():
     app.mount("/images/sample", StaticFiles(directory=str(DATASET_SAMPLE_DIR)), name="sample_images")
 
@@ -354,6 +351,12 @@ async def api_analyze(
             )
 
         contents = await file.read()
+        if len(contents) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty (0 bytes)."
+            )
+
         if len(contents) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=400,
@@ -444,7 +447,22 @@ async def api_s3_upload(filename: str):
 
     source_path = DATASET_PROCESSED_DIR / sanitized
     if not source_path.is_file():
-        raise HTTPException(status_code=404, detail="Processed image not found")
+        # Fallback 1: check cloud simulation tier folders
+        found = False
+        for tier_name in ["S3_STANDARD", "S3_STANDARD_IA", "S3_GLACIER"]:
+            candidate = CLOUD_SIM_DIR / tier_name / sanitized
+            if candidate.is_file():
+                source_path = candidate
+                found = True
+                break
+        # Fallback 2: check uploads folder
+        if not found:
+            candidate_upload = UPLOADS_DIR / sanitized
+            if candidate_upload.is_file():
+                source_path = candidate_upload
+                found = True
+        if not found:
+            raise HTTPException(status_code=404, detail="Processed image not found")
 
     result = s3_service.upload_file(source_path)
     if not result.get("success"):

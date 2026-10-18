@@ -119,6 +119,36 @@ def test_api_analyze_sample():
     print(f"Test inference output for {sample_name}: score={data['importance_score']}, category={data['category']}, storage={data['storage_class']}")
 
 
+def test_api_analyze_empty_file_rejected():
+    """Verify empty 0-byte upload is cleanly rejected with HTTP 400."""
+    res = client.post(
+        "/api/analyze",
+        files={"file": ("empty.jpg", b"", "image/jpeg")},
+        data={"save_to_simulation": "false"}
+    )
+    assert res.status_code == 400
+    assert "empty" in res.json()["detail"].lower()
+
+
+def test_api_thumbnail_endpoint():
+    """Verify thumbnail endpoint handles requests cleanly."""
+    res = client.get("/api/thumbnail/nonexistent_image.jpg")
+    assert res.status_code == 404
+
+    # Existing sample TIFF thumbnail
+    res_samples = client.get("/api/samples")
+    sample_name = res_samples.json()["samples"][0]["name"]
+    res_thumb = client.get(f"/api/thumbnail/{sample_name}")
+    assert res_thumb.status_code == 200
+    assert res_thumb.headers["content-type"] == "image/jpeg"
+
+
+def test_api_s3_upload_missing_file():
+    """Verify S3 upload returns 404 if file is absent from all local storage folders."""
+    res = client.post("/api/s3/upload/definitely_missing_12345.jpg")
+    assert res.status_code == 404
+
+
 if __name__ == "__main__":
     print("Running IntelliArchive Test Suite...")
     test_html_pages()
@@ -135,4 +165,10 @@ if __name__ == "__main__":
     print(" [PASS] test_api_samples_and_preview")
     test_api_analyze_sample()
     print(" [PASS] test_api_analyze_sample")
-    print("\nALL 7 TESTS PASSED SUCCESSFULLY!")
+    test_api_analyze_empty_file_rejected()
+    print(" [PASS] test_api_analyze_empty_file_rejected")
+    test_api_thumbnail_endpoint()
+    print(" [PASS] test_api_thumbnail_endpoint")
+    test_api_s3_upload_missing_file()
+    print(" [PASS] test_api_s3_upload_missing_file")
+    print("\nALL 10 TESTS PASSED SUCCESSFULLY!")

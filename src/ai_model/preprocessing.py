@@ -13,6 +13,9 @@ IMAGE_SIZE = (224, 224)
 
 def enhance_image(image):
     """Stretch the image's actual pixel range to 0-255 for visualization."""
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
     array = np.asarray(image).astype(np.float32)
 
     enhanced = np.zeros_like(array)

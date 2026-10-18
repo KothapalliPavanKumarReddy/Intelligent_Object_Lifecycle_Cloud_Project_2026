@@ -388,6 +388,8 @@ function initAnalyzePage() {
         analyzeBtn.disabled = true;
         analysisLoading.style.display = 'block';
         analysisResultCard.style.display = 'none';
+        const placeholderCard = document.getElementById('initialPlaceholderCard');
+        if (placeholderCard) placeholderCard.style.display = 'none';
 
         // Animate processing stages for UX
         const stageLabel = document.getElementById('processingStageLabel');
@@ -433,6 +435,9 @@ function initAnalyzePage() {
         } catch (err) {
             clearInterval(stageInterval);
             alert(`Analysis Error: ${err.message}`);
+            if (placeholderCard && analysisResultCard.style.display === 'none') {
+                placeholderCard.style.display = 'block';
+            }
         } finally {
             analysisLoading.style.display = 'none';
             analyzeBtn.disabled = false;
@@ -440,6 +445,8 @@ function initAnalyzePage() {
     });
 
     function renderAnalysisResult(data) {
+        const placeholderCard = document.getElementById('initialPlaceholderCard');
+        if (placeholderCard) placeholderCard.style.display = 'none';
         analysisResultCard.style.display = 'block';
 
         // Update score
@@ -586,6 +593,13 @@ window.closeImageModal = function () {
     if (modal) modal.classList.remove('active');
 };
 
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        window.closeImageModal();
+    }
+});
+
 
 function initS3ArchivePanel() {
     const refreshButton = document.getElementById("refreshS3Button");
@@ -718,15 +732,12 @@ function initS3ArchivePanel() {
                 throw new Error(result.detail || "S3 upload failed.");
             }
 
-            status.textContent =
-                `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;
+            const uploadMsg = `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;
+            status.textContent = uploadMsg;
 
-            // Refresh the real S3 object list after uploading.
-            setTimeout(() => {
-                status.textContent =
-                    `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;
-            }, 500);
-            refreshButton.click();
+            // Refresh the real S3 object list and preserve success message
+            await refreshButton.click();
+            status.textContent = uploadMsg;
         } catch (error) {
             status.textContent = `Upload error: ${error.message}`;
         } finally {

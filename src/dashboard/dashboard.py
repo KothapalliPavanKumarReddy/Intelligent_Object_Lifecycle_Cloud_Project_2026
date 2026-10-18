@@ -15,9 +15,18 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def create_dashboard():
+    if not RESULTS_FILE.exists():
+        print(f"Results file not found: {RESULTS_FILE}")
+        return
 
-    # Load results
-    df = pd.read_csv(RESULTS_FILE)
+    try:
+        df = pd.read_csv(RESULTS_FILE)
+        if df.empty or "category" not in df.columns:
+            print("Results file is empty or missing required columns. No charts generated.")
+            return
+    except Exception as e:
+        print(f"Error reading {RESULTS_FILE}: {e}")
+        return
 
     # Calculate distributions
     category_counts = df["category"].value_counts()

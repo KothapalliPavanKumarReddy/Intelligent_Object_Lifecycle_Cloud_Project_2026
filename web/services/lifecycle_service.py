@@ -162,7 +162,10 @@ class LocalSimulationStorageService(BaseStorageService):
         if not RESULTS_FILE.exists():
             df = pd.DataFrame(columns=["image_name", "importance_score", "category", "storage_class"])
         else:
-            df = pd.read_csv(RESULTS_FILE)
+            try:
+                df = pd.read_csv(RESULTS_FILE)
+            except Exception:
+                df = pd.DataFrame(columns=["image_name", "importance_score", "category", "storage_class"])
 
         # Remove existing if present to update
         df = df[df["image_name"] != image_name]

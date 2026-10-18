@@ -17,8 +17,15 @@ STORAGE_DIRS = {
 
 
 def simulate_lifecycle():
+    if not RESULTS_FILE.exists():
+        print(f"Results file not found: {RESULTS_FILE}")
+        return
 
-    df = pd.read_csv(RESULTS_FILE)
+    try:
+        df = pd.read_csv(RESULTS_FILE)
+    except Exception as e:
+        print(f"Error reading {RESULTS_FILE}: {e}")
+        return
 
     lifecycle_records = []
 
@@ -34,14 +41,20 @@ def simulate_lifecycle():
         storage_class = row["storage_class"]
 
         source_path = IMAGE_DIR / image_name
-        destination_dir = STORAGE_DIRS[storage_class]
+        destination_dir = STORAGE_DIRS.get(storage_class, CLOUD_DIR / storage_class)
         destination_path = destination_dir / image_name
 
         destination_dir.mkdir(parents=True, exist_ok=True)
 
         if source_path.exists():
             shutil.copy2(source_path, destination_path)
-            action = "Copied to simulated storage"
+            # Remove stale copies from other tiers to avoid cross-tier duplication
+            for other_tier, other_dir in STORAGE_DIRS.items():
+                if other_tier != storage_class:
+                    stale_file = other_dir / image_name
+                    if stale_file.exists():
+                        stale_file.unlink()
+            action = f"Copied to {storage_class}"
         else:
             action = "Source image not found"
 

@@ -136,12 +136,12 @@ Run the test suite using pytest:
 ```
 
 #### Verified Test Results
-During the formal audit run, all **41 tests passed** (100% test pass rate):
+During the formal audit run, all **44 tests passed** (100% test pass rate):
 ```text
-tests/test_lifecycle_storage.py . . . . . . . . . .                      [ 24%]
-tests/test_s3_service.py . . . . . . . . . . . . . . . . . . . . . . . .  [ 82%]
-tests/test_web_app.py . . . . . . .                                      [100%]
-================= 41 passed, 3 warnings in 279.33s (0:04:39) ==================
+tests/test_lifecycle_storage.py . . . . . . . . . .                      [ 22%]
+tests/test_s3_service.py . . . . . . . . . . . . . . . . . . . . . . . .  [ 77%]
+tests/test_web_app.py . . . . . . . . . .                                [100%]
+======================= 44 passed, 1 warning in 18.22s ========================
 ```
 
 ---
