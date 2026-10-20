@@ -143,6 +143,40 @@ def test_api_thumbnail_endpoint():
     assert res_thumb.headers["content-type"] == "image/jpeg"
 
 
+
+
+def test_api_s3_objects_endpoint():
+    """Verify /api/s3/objects endpoint returns 200 or clean 502 with JSON error detail."""
+    from unittest.mock import patch
+    with patch("web.app.s3_service.list_objects") as mock_list:
+        mock_list.return_value = {
+            "success": True,
+            "bucket": "test-bucket",
+            "prefix": "satellite-images/",
+            "objects": [{"key": "satellite-images/test.jpg", "size_bytes": 1024, "storage_class": "STANDARD"}],
+            "count": 1
+        }
+        res = client.get("/api/s3/objects")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["count"] == 1
+
+
+def test_api_s3_objects_endpoint_error_handling():
+    """Verify /api/s3/objects returns 502 JSON when s3 listing fails."""
+    from unittest.mock import patch
+    with patch("web.app.s3_service.list_objects") as mock_list:
+        mock_list.return_value = {
+            "success": False,
+            "error": "Simulated connection error",
+            "bucket": "test-bucket",
+            "prefix": "satellite-images/"
+        }
+        res = client.get("/api/s3/objects")
+        assert res.status_code == 502
+        assert "Simulated connection error" in res.json()["detail"]
+
 def test_api_s3_upload_missing_file():
     """Verify S3 upload returns 404 if file is absent from all local storage folders."""
     res = client.post("/api/s3/upload/definitely_missing_12345.jpg")

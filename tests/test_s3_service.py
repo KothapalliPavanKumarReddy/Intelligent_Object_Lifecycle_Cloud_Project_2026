@@ -456,3 +456,30 @@ class TestClientConstruction:
             assert client is not None
             mock_client.assert_called_once_with("s3")
         assert "AWS_PROFILE" not in os.environ
+
+    def test_named_profile_not_found_falls_back_to_default_credentials(self):
+        """
+        When a named profile does not exist in ~/.aws/credentials (e.g. EC2/ECS),
+        _get_client() catches ProfileNotFound and falls back to boto3.Session without profile_name.
+        """
+        from botocore.exceptions import ProfileNotFound
+        import web.services.s3_service as mod
+
+        svc = mod.S3Service(bucket="test-bucket", region="ap-south-1", profile="nonexistent-profile")
+
+        with patch("web.services.s3_service.boto3.Session") as mock_session_cls:
+            mock_client = MagicMock()
+            fallback_session = MagicMock()
+            fallback_session.client.return_value = mock_client
+            mock_session_cls.side_effect = [
+                ProfileNotFound(profile="nonexistent-profile"),
+                fallback_session,
+            ]
+
+            client = svc._get_client()
+            assert client is mock_client
+            assert svc._profile is None
+            assert mock_session_cls.call_count == 2
+            fallback_call_kwargs = mock_session_cls.call_args_list[1][1]
+            assert "profile_name" not in fallback_call_kwargs
+            assert fallback_call_kwargs["region_name"] == "ap-south-1"

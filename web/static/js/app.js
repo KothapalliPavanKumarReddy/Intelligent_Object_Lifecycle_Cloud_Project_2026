@@ -619,10 +619,17 @@ function initS3ArchivePanel() {
 
         try {
             const response = await fetch("/api/s3/objects");
-            const data = await response.json();
+            let data = null;
+            const contentType = response.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(text || `Server error (${response.status})`);
+            }
 
             if (!response.ok) {
-                throw new Error(data.detail || "Unable to load S3 objects.");
+                throw new Error((data && data.detail) || "Unable to load S3 objects.");
             }
 
             if (!data.success) {
@@ -726,10 +733,17 @@ function initS3ArchivePanel() {
                 { method: "POST" }
             );
 
-            const result = await response.json();
+            let result = null;
+            const contentType = response.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(text || `Server error (${response.status})`);
+            }
 
             if (!response.ok) {
-                throw new Error(result.detail || "S3 upload failed.");
+                throw new Error((result && result.detail) || "S3 upload failed.");
             }
 
             const uploadMsg = `Successfully uploaded ${result.object_key} to bucket ${result.bucket}.`;

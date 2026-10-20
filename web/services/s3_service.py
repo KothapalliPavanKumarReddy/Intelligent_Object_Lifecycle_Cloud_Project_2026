@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError, ProfileNotFound
 
 # ---------------------------------------------------------------------------
 # Module-level configuration (read once at import time)
@@ -105,20 +105,30 @@ class S3Service:
 
             session_kwargs: Dict[str, Any] = {"region_name": self.region}
             if self._profile and self._profile.strip():
-                session_kwargs["profile_name"] = self._profile.strip()
+                try:
+                    session = boto3.Session(profile_name=self._profile.strip(), **session_kwargs)
+                    self._client = session.client("s3")
+                    return self._client
+                except ProfileNotFound:
+                    # Named profile does not exist in this environment (e.g. AWS EC2/ECS/Docker).
+                    # Fall back to default credential provider chain (IAM instance role / env vars).
+                    self._profile = None
+
             session = boto3.Session(**session_kwargs)
             self._client = session.client("s3")
         return self._client
 
     @staticmethod
-    def _safe_error_message(exc: ClientError) -> str:
+    def _safe_error_message(exc: Exception) -> str:
         """
-        Extract a user-friendly error string from a ClientError without
+        Extract a user-friendly error string from an Exception without
         leaking any credential or secret information.
         """
-        code = exc.response.get("Error", {}).get("Code", "UnknownError")
-        message = exc.response.get("Error", {}).get("Message", str(exc))
-        return f"AWS S3 error [{code}]: {message}"
+        if isinstance(exc, ClientError):
+            code = exc.response.get("Error", {}).get("Code", "UnknownError")
+            message = exc.response.get("Error", {}).get("Message", str(exc))
+            return f"AWS S3 error [{code}]: {message}"
+        return f"AWS S3 error: {type(exc).__name__} - {str(exc)}"
 
     # ------------------------------------------------------------------
     # Public API
@@ -184,7 +194,7 @@ class S3Service:
                 "error": f"Local file not found: '{file_path}'",
                 "local_path": str(file_path),
             }
-        except ClientError as exc:
+        except (ClientError, BotoCoreError, Exception) as exc:
             return {
                 "success": False,
                 "error": self._safe_error_message(exc),
@@ -244,7 +254,7 @@ class S3Service:
                 "objects": objects,
                 "count": len(objects),
             }
-        except ClientError as exc:
+        except (ClientError, BotoCoreError, Exception) as exc:
             return {
                 "success": False,
                 "error": self._safe_error_message(exc),
@@ -310,6 +320,13 @@ class S3Service:
                     "bucket": self.bucket,
                     "object_key": object_key,
                 }
+            return {
+                "exists": False,
+                "bucket": self.bucket,
+                "object_key": object_key,
+                "error": self._safe_error_message(exc),
+            }
+        except (BotoCoreError, Exception) as exc:
             return {
                 "exists": False,
                 "bucket": self.bucket,

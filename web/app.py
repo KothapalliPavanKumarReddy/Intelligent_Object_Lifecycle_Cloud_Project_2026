@@ -429,13 +429,21 @@ async def api_analyze(
 @app.get("/api/s3/objects")
 async def api_s3_objects():
     """List images in the private AWS S3 bucket."""
-    result = s3_service.list_objects(prefix="satellite-images/")
-    if not result.get("success"):
+    try:
+        result = s3_service.list_objects(prefix="satellite-images/")
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=502,
+                detail=result.get("error", "S3 listing failed"),
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail=result.get("error", "S3 listing failed"),
+            detail=f"AWS S3 service error: {str(exc)}",
         )
-    return result
 
 
 @app.post("/api/s3/upload/{filename}")
@@ -464,13 +472,21 @@ async def api_s3_upload(filename: str):
         if not found:
             raise HTTPException(status_code=404, detail="Processed image not found")
 
-    result = s3_service.upload_file(source_path)
-    if not result.get("success"):
+    try:
+        result = s3_service.upload_file(source_path)
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=502,
+                detail=result.get("error", "S3 upload failed"),
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail=result.get("error", "S3 upload failed"),
+            detail=f"AWS S3 upload error: {str(exc)}",
         )
-    return result
 
 if __name__ == "__main__":
     import uvicorn
