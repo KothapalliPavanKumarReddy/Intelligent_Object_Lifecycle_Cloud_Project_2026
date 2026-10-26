@@ -1,43 +1,48 @@
-# Dataset
+# Dataset and sample imagery
 
-This folder contains dataset information.
+## Dataset used
 
-Files to be added:
-- Dataset Details
-- Dataset Description
-- Dataset Source
-# Dataset
+IntelliArchive references SpaceNet satellite imagery for development and demonstration. Sample names shown in the application include RGB pan-sharpened Las Vegas tiles (AOI 2). SpaceNet is a family of datasets; imagery, labels, license terms, and citations vary by challenge and product.
 
-## Dataset Name
-SpaceNet Dataset
+SpaceNet is catalogued in the AWS Registry of Open Data and hosted in the public S3 bucket s3://spacenet-dataset/. The application uses image pixels as CLIP inputs. It does not train CLIP on SpaceNet labels, and its importance score is not a building/road detection result or supervised accuracy metric.
 
-## Source
-SpaceNet / AWS Open Data
+## What is included in this repository
 
-## Purpose
-The dataset is used to develop and evaluate the
-AI-based satellite image importance scoring and
-intelligent storage lifecycle optimization system.
+On the current main branch, dataset/ contains this README but no checked-in raw/, sample/, or processed/ image assets. The application advertises ten sample GeoTIFFs, so verify where those files are supplied locally or in the deployment environment before saying the binaries are included in GitHub. Large imagery should not be committed without checking repository size and the exact product license.
 
-## Dataset Structure
+The lifecycle simulation copies archived images into cloud_simulation/S3_STANDARD/, cloud_simulation/S3_STANDARD_IA/, or cloud_simulation/S3_GLACIER/. It records decisions in results/lifecycle_log.csv and results/importance_scores.csv. These are local prototype artifacts, not durable S3 lifecycle transitions.
 
-- `raw/` - Original downloaded satellite images.
-- `sample/` - Small subset used for development and testing.
-- `processed/` - Images generated after preprocessing.
+## Source and licensing
 
-## Preprocessing
+- SpaceNet dataset catalog: https://spacenet.ai/datasets/
+- AWS Open Data Registry entry: https://registry.opendata.aws/spacenet/
+- Check the exact challenge/product page for license and attribution requirements. SpaceNet's catalog lists varying licenses; do not assume all subsets share the same terms.
 
-The preprocessing pipeline will include:
+Suggested citation; update the access date when submitting:
 
-1. Image loading
-2. Image validation
-3. Resizing
-4. Format conversion where required
-5. Normalization
-6. Saving processed images
+> SpaceNet on Amazon Web Services (AWS). “Datasets.” The SpaceNet Catalog. https://spacenet.ai/datasets/. Accessed 26 October 2026.
 
-## Usage
+## Image handling in this project
 
-The sample dataset is used during development to
-test the Vision Foundation Model and importance
-scoring pipeline before scaling to a larger dataset.
+1. Load a supported GeoTIFF or image through the analysis flow.
+2. Validate it and prepare a display preview. Contrast stretching is for visualization, not radiometric calibration.
+3. Convert to RGB and resize the model input to 224 × 224 for CLIP ViT-B/32.
+4. Use the output probabilities to calculate the prototype importance score and category.
+5. If lifecycle simulation is selected, copy the file into a local simulated tier and update the CSV ledgers.
+
+## Reproducibility record
+
+For every sample used in a result or screenshot, record:
+
+| Field | What to record |
+| --- | --- |
+| Filename | Exact input filename |
+| Product | SpaceNet challenge/product and release |
+| AOI or location | Only when confirmed by source metadata |
+| Source | Exact dataset URL or S3 key |
+| License | Terms for that exact product |
+| Checksum | SHA-256 of the exact file used |
+| Processing | Contrast/resize settings and relevant library versions |
+| Inference | CLIP model ID, text prompts, and thresholds |
+
+Do not publish dataset counts or model-performance claims without a sample manifest and evaluation procedure.
